@@ -84,23 +84,28 @@ public class LogAspect
     {
         try
         {
-            // 获取当前的用户
-            LoginUser loginUser = SecurityUtils.getLoginUser();
-
             // *========数据库日志=========*//
             SysOperLog operLog = new SysOperLog();
             operLog.setStatus(BusinessStatus.SUCCESS.ordinal());
             // 请求的地址
             String ip = IpUtils.getIpAddr();
             operLog.setOperIp(ip);
-            operLog.setOperUrl(StringUtils.substring(ServletUtils.getRequest().getRequestURI(), 0, 255));
-            if (loginUser != null)
+            String requestUri = StringUtils.substring(ServletUtils.getRequest().getRequestURI(), 0, 255);
+            operLog.setOperUrl(requestUri);
+
+            // 只有非匿名访问接口才获取用户信息
+            if (!isAnonymousUrl(requestUri))
             {
-                operLog.setOperName(loginUser.getUsername());
-                SysUser currentUser = loginUser.getUser();
-                if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept()))
+                // 获取当前的用户
+                LoginUser loginUser = SecurityUtils.getLoginUser();
+                if (loginUser != null)
                 {
-                    operLog.setDeptName(currentUser.getDept().getDeptName());
+                    operLog.setOperName(loginUser.getUsername());
+                    SysUser currentUser = loginUser.getUser();
+                    if (StringUtils.isNotNull(currentUser) && StringUtils.isNotNull(currentUser.getDept()))
+                    {
+                        operLog.setDeptName(currentUser.getDept().getDeptName());
+                    }
                 }
             }
 
@@ -134,6 +139,13 @@ public class LogAspect
         }
     }
 
+    /**
+     * 判断是否是匿名访问URL
+     */
+    private boolean isAnonymousUrl(String url)
+    {
+        return "/aihuman/task/submit".equals(url);
+    }
     /**
      * 获取注解中对方法的描述信息 用于Controller层注解
      * 
