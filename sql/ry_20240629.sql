@@ -259,7 +259,7 @@ insert into sys_menu values('1058', '导入代码', '116', '4', '#', '', '', '',
 insert into sys_menu values('1059', '预览代码', '116', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview',           '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1060', '生成代码', '116', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code',              '#', 'admin', sysdate(), '', null, '');
 
--- 菜单 SQL
+-- 数字人用户管理菜单 SQL
 insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
 values('用户管理', '2000', '1', 'user', 'aihuman/user/index', 1, 0, 'C', '0', '0', 'aihuman:user:list', 'user', 'admin', sysdate(), '', null, '用户管理菜单');
 
@@ -281,6 +281,29 @@ values('用户管理删除', @parentId, '4',  '#', '', 1, 0, 'F', '0', '0', 'aih
 
 insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
 values('用户管理导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:export',       '#', 'admin', sysdate(), '', null, '');
+
+-- 数字人任务管理菜单 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理', '2000', '1', 'task', 'aihuman/task/index', 1, 0, 'C', '0', '0', 'aihuman:task:list', 'monitor', 'admin', sysdate(), '', null, '任务管理菜单');
+
+-- 按钮父菜单ID
+SELECT @parentId := LAST_INSERT_ID();
+
+-- 按钮 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理查询', @parentId, '1',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:query',        '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理新增', @parentId, '2',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:add',          '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理修改', @parentId, '3',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:edit',         '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理删除', @parentId, '4',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:remove',       '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('任务管理导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:export',       '#', 'admin', sysdate(), '', null, '');
 
 -- ----------------------------
 -- 6、用户和角色关联表  用户N-1角色
@@ -753,3 +776,35 @@ create table ai_human_user
 insert into ai_human_user (user_name, nick_name, user_type, email, phonenumber, sex, avatar, password, status, del_flag, login_ip, login_date, create_by, create_time, update_by, update_time, remark)
 values ('user1', 'nickname1', '00', 'user1@example.com', '12345678901', '0', '', 'password1', '0', '0', '192.168.1.1', '2025-02-06 10:00:00', 'admin', '2025-02-06 09:00:00', 'admin', '2025-02-06 09:00:00', 'remark1'),
        ('user2', 'nickname2', '01', 'user2@example.com', '12345678902', '1', '', 'password2', '0', '0', '192.168.1.2', '2025-02-07 11:00:00', 'admin', '2025-02-07 10:00:00', 'admin', '2025-02-07 10:00:00', 'remark2');
+
+-- ----------------------------
+-- 21、数字人渲染任务表字段
+-- ----------------------------
+drop table if exists ai_human_task;
+create table ai_human_task (
+                               task_id           bigint(20)      not null auto_increment    comment '任务ID',
+                               task_name         varchar(50)     not null                   comment '任务名称',
+                               task_type         varchar(20)     not null                   comment '任务类型',
+                               status            char(1)         default '0'                comment '任务状态（0待处理 1处理中 2已完成 3失败）',
+                               priority          int(4)          default 1                  comment '优先级（1-10，值越大优先级越高）',
+                               submit_time       datetime                                    comment '提交时间',
+                               process_start_time datetime                                   comment '开始处理时间',
+                               process_end_time  datetime                                    comment '处理完成时间',
+                               result            varchar(2000)                              comment '处理结果',
+                               error_message     varchar(2000)                              comment '失败原因',
+                               user_id         varchar(255)                                comment '用户标识',
+                               client_id         varchar(255)                                comment '客户端标识',
+                               create_by         varchar(64)     default ''                 comment '创建者',
+                               create_time       datetime                                    comment '创建时间',
+                               update_by         varchar(64)     default ''                 comment '更新者',
+                               update_time       datetime                                    comment '更新时间',
+                               remark            varchar(500)    default null               comment '备注',
+                               primary key (task_id)
+) engine=innodb auto_increment=100 comment = '任务表';
+
+-- 创建索引
+create index idx_task_status on ai_human_task(status);
+create index idx_task_priority on ai_human_task(priority);
+create index idx_submit_time on ai_human_task(submit_time);
+create index idx_client_id on ai_human_task(client_id);
+create index idx_user_id on ai_human_task(user_id);
