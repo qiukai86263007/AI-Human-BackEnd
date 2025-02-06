@@ -259,6 +259,28 @@ insert into sys_menu values('1058', '导入代码', '116', '4', '#', '', '', '',
 insert into sys_menu values('1059', '预览代码', '116', '5', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:preview',           '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('1060', '生成代码', '116', '6', '#', '', '', '', 1, 0, 'F', '0', '0', 'tool:gen:code',              '#', 'admin', sysdate(), '', null, '');
 
+-- 菜单 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理', '2000', '1', 'user', 'aihuman/user/index', 1, 0, 'C', '0', '0', 'aihuman:user:list', 'user', 'admin', sysdate(), '', null, '用户管理菜单');
+
+-- 按钮父菜单ID
+SELECT @parentId := LAST_INSERT_ID();
+
+-- 按钮 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理查询', @parentId, '1',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:query',        '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理新增', @parentId, '2',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:add',          '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理修改', @parentId, '3',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:edit',         '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理删除', @parentId, '4',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:remove',       '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('用户管理导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:user:export',       '#', 'admin', sysdate(), '', null, '');
 
 -- ----------------------------
 -- 6、用户和角色关联表  用户N-1角色
@@ -699,3 +721,35 @@ create table gen_table_column (
   update_time       datetime                                   comment '更新时间',
   primary key (column_id)
 ) engine=innodb auto_increment=1 comment = '代码生成业务表字段';
+
+
+-- ----------------------------
+-- 20、数字人用户管理业务表字段
+-- ----------------------------
+drop table if exists ai_human_user;
+create table ai_human_user
+(
+    user_id     bigint auto_increment comment '用户ID'
+        primary key,
+    user_name   varchar(30)               not null comment '用户账号',
+    nick_name   varchar(30)               not null comment '用户昵称',
+    user_type   varchar(2)   default '00' null comment '用户类型（00系统用户 01注册用户）',
+    email       varchar(50)               null comment '用户邮箱',
+    phonenumber varchar(11)               null comment '手机号码',
+    sex         char         default '0'  null comment '用户性别（0男 1女 2未知）',
+    avatar      varchar(100) default ''   null comment '头像地址',
+    password    varchar(100) default ''   null comment '密码',
+    status      char         default '0'  null comment '帐号状态（0正常 1停用）',
+    del_flag    char         default '0'  null comment '删除标志（0代表存在 2代表删除）',
+    login_ip    varchar(128) default ''   null comment '最后登录IP',
+    login_date  datetime                  null comment '最后登录时间',
+    create_by   varchar(64)               null comment '创建者',
+    create_time datetime                  null comment '创建时间',
+    update_by   varchar(64)               null comment '更新者',
+    update_time datetime                  null comment '更新时间',
+    remark      varchar(500)              null comment '备注'
+)engine=innodb comment 'AI数字人用户信息表';
+-- 模拟数据
+insert into ai_human_user (user_name, nick_name, user_type, email, phonenumber, sex, avatar, password, status, del_flag, login_ip, login_date, create_by, create_time, update_by, update_time, remark)
+values ('user1', 'nickname1', '00', 'user1@example.com', '12345678901', '0', '', 'password1', '0', '0', '192.168.1.1', '2025-02-06 10:00:00', 'admin', '2025-02-06 09:00:00', 'admin', '2025-02-06 09:00:00', 'remark1'),
+       ('user2', 'nickname2', '01', 'user2@example.com', '12345678902', '1', '', 'password2', '0', '0', '192.168.1.2', '2025-02-07 11:00:00', 'admin', '2025-02-07 10:00:00', 'admin', '2025-02-07 10:00:00', 'remark2');
