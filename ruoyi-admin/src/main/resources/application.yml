@@ -127,3 +127,9 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# 数字人配置
+ai-human:
+  task:
+    # 最大并发任务数
+    max-concurrent-tasks: 5

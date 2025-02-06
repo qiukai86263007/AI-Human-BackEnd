@@ -102,8 +102,8 @@ public class AiHumanTaskController extends BaseController
         aiHumanTask.setStatus(String.valueOf(TaskStatus.PENDING.getValue()));
         // 设置提交时间为当前时间
         aiHumanTask.setCreateTime(new Date());
-        // 设置创建者
-        aiHumanTask.setCreateBy(getUsername());
+        // 设置创建者为admin
+        aiHumanTask.setCreateBy("admin");
         System.out.println("提交了任务: "+aiHumanTask);
         return toAjax(aiHumanTaskService.insertAiHumanTask(aiHumanTask));
     }
