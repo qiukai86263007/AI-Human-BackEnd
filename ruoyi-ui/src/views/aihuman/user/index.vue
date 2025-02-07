@@ -61,7 +61,7 @@
         <el-date-picker clearable
           v-model="queryParams.loginDate"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择最后登录时间">
         </el-date-picker>
       </el-form-item>
@@ -132,7 +132,7 @@
       <el-table-column label="最后登录IP" align="center" prop="loginIp" />
       <el-table-column label="最后登录时间" align="center" prop="loginDate" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.loginDate, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.loginDate, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
@@ -155,7 +155,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -195,7 +195,7 @@
           <el-date-picker clearable
             v-model="form.loginDate"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择最后登录时间">
           </el-date-picker>
         </el-form-item>

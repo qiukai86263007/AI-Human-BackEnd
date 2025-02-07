@@ -21,7 +21,7 @@
         <el-date-picker clearable
           v-model="queryParams.submitTime"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择提交时间">
         </el-date-picker>
       </el-form-item>
@@ -29,7 +29,7 @@
         <el-date-picker clearable
           v-model="queryParams.processStartTime"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择开始处理时间">
         </el-date-picker>
       </el-form-item>
@@ -37,7 +37,7 @@
         <el-date-picker clearable
           v-model="queryParams.processEndTime"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择处理完成时间">
         </el-date-picker>
       </el-form-item>
@@ -118,17 +118,17 @@
       <el-table-column label="优先级" align="center" prop="priority" />
       <el-table-column label="提交时间" align="center" prop="submitTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.submitTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.submitTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="开始处理时间" align="center" prop="processStartTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.processStartTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.processStartTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="处理完成时间" align="center" prop="processEndTime" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.processEndTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.processEndTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="处理结果" align="center" prop="result" />
@@ -155,7 +155,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -177,7 +177,7 @@
           <el-date-picker clearable
             v-model="form.submitTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择提交时间">
           </el-date-picker>
         </el-form-item>
@@ -185,7 +185,7 @@
           <el-date-picker clearable
             v-model="form.processStartTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择开始处理时间">
           </el-date-picker>
         </el-form-item>
@@ -193,7 +193,7 @@
           <el-date-picker clearable
             v-model="form.processEndTime"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择处理完成时间">
           </el-date-picker>
         </el-form-item>

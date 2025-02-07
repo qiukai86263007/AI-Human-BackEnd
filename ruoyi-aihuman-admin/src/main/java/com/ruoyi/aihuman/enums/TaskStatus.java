@@ -33,4 +33,8 @@ public enum TaskStatus {
         }
         throw new IllegalArgumentException("Unknown TaskStatus value: " + value);
     }
+
+    public static String setStatus(TaskStatus status) {
+        return String.valueOf(status.getValue());
+    }
 }

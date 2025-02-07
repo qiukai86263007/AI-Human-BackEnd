@@ -43,6 +43,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="userId != null  and userId != ''"> and user_id = #{userId}</if>
             <if test="clientId != null  and clientId != ''"> and client_id = #{clientId}</if>
         </where>
+        ${params.orderBy}
     </select>
     
     <select id="selectAiHumanTaskByTaskId" parameterType="Long" resultMap="AiHumanTaskResult">

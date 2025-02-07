@@ -37,18 +37,18 @@ public class AiHumanTask extends BaseEntity
     private Long priority;
 
     /** 提交时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "提交时间", width = 30, dateFormat = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "提交时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date submitTime;
 
     /** 开始处理时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "开始处理时间", width = 30, dateFormat = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "开始处理时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date processStartTime;
 
     /** 处理完成时间 */
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    @Excel(name = "处理完成时间", width = 30, dateFormat = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "处理完成时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
     private Date processEndTime;
 
     /** 处理结果 */

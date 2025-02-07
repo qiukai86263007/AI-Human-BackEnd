@@ -2,9 +2,12 @@ package com.ruoyi.aihuman.task;
 
 import java.util.Date;
 import java.util.List;
+
+import com.ruoyi.aihuman.enums.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import com.ruoyi.aihuman.domain.AiHumanTask;
@@ -30,10 +33,12 @@ public class TaskProcessor {
     private int maxConcurrentTasks;
 
     /**
-     * 每5秒执行一次任务处理
+     * 每2秒执行一次任务处理
      */
-    @Scheduled(fixedRate = 5000)
+    @Scheduled(fixedRate = 2000)
+    @Async
     public void processTask() {
+        AiHumanTask task = null;
         try {
             // 检查当前运行中的任务数量
             int runningTasks = getRunningTaskCount();
@@ -44,7 +49,7 @@ public class TaskProcessor {
             }
 
             // 获取待处理的任务
-            AiHumanTask task = getNextTask();
+            task = getNextTask();
             if (task == null) {
                 log.debug("没有待处理的任务,休息一会!");
                 return;
@@ -54,23 +59,30 @@ public class TaskProcessor {
                     task.getTaskId(), task.getTaskName(), task.getTaskType(), runningTasks + 1);
 
             // 更新任务状态为处理中
-            task.setStatus("1");
+            task.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING));
             task.setProcessStartTime(new Date());
             taskService.updateAiHumanTask(task);
             log.info("任务状态更新为处理中: taskId={}", task.getTaskId());
 
             // 根据任务类型进行处理
-            processTaskByType(task);
+            doProcessTask(task);
 
             // 更新任务状态为已完成
-            task.setStatus("2");
+            task.setStatus(TaskStatus.setStatus(TaskStatus.COMPLETED));
             task.setProcessEndTime(new Date());
             taskService.updateAiHumanTask(task);
             log.info("任务处理完成: taskId={}, 耗时={}ms", task.getTaskId(),
                     task.getProcessEndTime().getTime() - task.getProcessStartTime().getTime());
 
         } catch (Exception e) {
-            log.error("任务处理异常: {}", e.getMessage(), e);
+            log.error("任务处理失败: error={}", e.getMessage(), e);
+            if (task != null) {
+                task.setStatus(TaskStatus.setStatus(TaskStatus.FAILED));
+                task.setErrorMessage(e.getMessage());
+                task.setProcessEndTime(new Date());
+                taskService.updateAiHumanTask(task);
+                log.error("任务处理失败: taskId={}, error={}", task.getTaskId(), e.getMessage(), e);
+            }
         }
     }
 
@@ -80,7 +92,8 @@ public class TaskProcessor {
      */
     private AiHumanTask getNextTask() {
         AiHumanTask queryTask = new AiHumanTask();
-        queryTask.setStatus("0"); // 待处理状态
+        queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING)); // 待处理状态
+        queryTask.getParams().put("orderBy", "order by priority desc, submit_time asc");
         List<AiHumanTask> tasks = taskService.selectAiHumanTaskList(queryTask);
 
         if (tasks != null && !tasks.isEmpty()) {
@@ -94,56 +107,27 @@ public class TaskProcessor {
     /**
      * 根据任务类型处理任务
      */
-    private void processTaskByType(AiHumanTask task) {
-        try {
-            String taskType = task.getTaskType();
-            log.info("开始处理任务类型: taskId={}, taskType={}", task.getTaskId(), taskType);
 
-            switch (taskType) {
-                case "type1":
-                    // 处理类型1的任务
-                    processType1Task(task);
-                    break;
-                case "type2":
-                    // 处理类型2的任务
-                    processType2Task(task);
-                    break;
-                default:
-                    log.warn("未知的任务类型: taskId={}, taskType={}", task.getTaskId(), taskType);
-                    task.setStatus("3"); // 设置为失败状态
-                    task.setErrorMessage("未知的任务类型");
-                    taskService.updateAiHumanTask(task);
-            }
+
+    /**
+     * 处理任务，提交成功后更新任务状态为处理中
+     */
+    private void doProcessTask(AiHumanTask task) throws InterruptedException {
+        try {
+            // 根据任务类型进行处理
+            Thread.sleep(5000);
         } catch (Exception e) {
-            log.error("任务处理失败: taskId={}, error={}", task.getTaskId(), e.getMessage(), e);
-            task.setStatus("3"); // 设置为失败状态
-            task.setErrorMessage(e.getMessage());
-            taskService.updateAiHumanTask(task);
+            throw e;
         }
     }
 
-    /**
-     * 处理类型1任务
-     */
-    private void processType1Task(AiHumanTask task) {
-        log.info("处理类型1任务: taskId={}", task.getTaskId());
-        // 实现类型1任务的具体处理逻辑
-    }
-
-    /**
-     * 处理类型2任务
-     */
-    private void processType2Task(AiHumanTask task) {
-        log.info("处理类型2任务: taskId={}", task.getTaskId());
-        // 实现类型2任务的具体处理逻辑
-    }
 
     /**
      * 获取当前运行中的任务数量
      */
     private int getRunningTaskCount() {
         AiHumanTask queryTask = new AiHumanTask();
-        queryTask.setStatus("1"); // 处理中状态
+        queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING)); // 处理中状态
         List<AiHumanTask> runningTasks = taskService.selectAiHumanTaskList(queryTask);
         return runningTasks != null ? runningTasks.size() : 0;
     }
