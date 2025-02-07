@@ -305,6 +305,30 @@ values('任务管理删除', @parentId, '4',  '#', '', 1, 0, 'F', '0', '0', 'aih
 insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
 values('任务管理导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'aihuman:task:export',       '#', 'admin', sysdate(), '', null, '');
 
+
+-- GPU集群管理菜单 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理', '2000', '1', 'cluster', 'aihuamn/cluster/index', 1, 0, 'C', '0', '0', 'aihuamn:cluster:list', 'tree', 'admin', sysdate(), '', null, 'GPU集群管理菜单');
+
+-- 按钮父菜单ID
+SELECT @parentId := LAST_INSERT_ID();
+
+-- 按钮 SQL
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理查询', @parentId, '1',  '#', '', 1, 0, 'F', '0', '0', 'aihuamn:cluster:query',        '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理新增', @parentId, '2',  '#', '', 1, 0, 'F', '0', '0', 'aihuamn:cluster:add',          '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理修改', @parentId, '3',  '#', '', 1, 0, 'F', '0', '0', 'aihuamn:cluster:edit',         '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理删除', @parentId, '4',  '#', '', 1, 0, 'F', '0', '0', 'aihuamn:cluster:remove',       '#', 'admin', sysdate(), '', null, '');
+
+insert into sys_menu (menu_name, parent_id, order_num, path, component, is_frame, is_cache, menu_type, visible, status, perms, icon, create_by, create_time, update_by, update_time, remark)
+values('GPU集群管理导出', @parentId, '5',  '#', '', 1, 0, 'F', '0', '0', 'aihuamn:cluster:export',       '#', 'admin', sysdate(), '', null, '');
+
 -- ----------------------------
 -- 6、用户和角色关联表  用户N-1角色
 -- ----------------------------
@@ -808,3 +832,43 @@ create index idx_task_priority on ai_human_task(priority);
 create index idx_submit_time on ai_human_task(submit_time);
 create index idx_client_id on ai_human_task(client_id);
 create index idx_user_id on ai_human_task(user_id);
+
+
+-- ----------------------------
+--22、 GPU集群管理表
+-- ----------------------------
+drop table if exists ai_human_cluster;
+create table ai_gpu_cluster (
+    cluster_id          bigint(20)      not null auto_increment    comment '集群ID',
+    cluster_name        varchar(50)     not null                   comment '集群名称',
+    ip_address          varchar(50)     not null                   comment 'IP地址',
+    port                int            default 22                   comment '端口号',
+    gpu_count           int            not null                    comment 'GPU数量',
+    gpu_type            varchar(50)                               comment 'GPU型号',
+    gpu_memory          int                                       comment 'GPU显存(GB)',
+    status              char(1)        default '0'                comment '集群状态（0空闲 1使用中 2离线 3故障）',
+    enabled             char(1)        default '1'                comment '是否启用（0停用 1启用）',
+    cpu_cores           int                                       comment 'CPU核心数',
+    memory_size         int                                       comment '内存大小(GB)',
+    disk_space          int                                       comment '磁盘空间(GB)',
+    load_average        decimal(5,2)                             comment 'GPU负载率',
+    temperature         decimal(5,2)                             comment 'GPU温度(℃)',
+    last_heartbeat      datetime                                 comment '最后心跳时间',
+    create_by           varchar(64)    default ''                 comment '创建者',
+    create_time         datetime                                 comment '创建时间',
+    update_by           varchar(64)    default ''                 comment '更新者',
+    update_time         datetime                                 comment '更新时间',
+    remark              varchar(500)   default null              comment '备注',
+    primary key (cluster_id)
+) engine=innodb auto_increment=100 comment = 'GPU集群管理表';
+
+-- 创建索引
+create index idx_cluster_status on ai_gpu_cluster(status);
+create index idx_cluster_enabled on ai_gpu_cluster(enabled);
+create index idx_last_heartbeat on ai_gpu_cluster(last_heartbeat);
+
+-- 插入测试数据
+INSERT INTO ai_gpu_cluster (cluster_name, ip_address, gpu_count, gpu_type, gpu_memory, status, enabled, cpu_cores, memory_size, disk_space, load_average, temperature, last_heartbeat, create_by, create_time, remark) VALUES 
+('GPU-Cluster-01', '192.168.1.100', 4, 'NVIDIA GTX4090', 80, '0', '1', 64, 512, 2000, 35.50, 65.20, NOW(), 'admin', NOW(), '推理集群'),
+('GPU-Cluster-02', '192.168.1.101', 2, 'NVIDIA GTX4090', 32, '1', '1', 32, 256, 1000, 85.20, 72.30, NOW(), 'admin', NOW(), '推理集群'),
+('GPU-Cluster-03', '192.168.1.102', 8, 'NVIDIA GTX4090', 80, '2', '0', 128, 1024, 4000, 0.00, 45.00, NOW(), 'admin', NOW(), '推理集群');

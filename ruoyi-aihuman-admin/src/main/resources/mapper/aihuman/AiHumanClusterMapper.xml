@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.aihuman.mapper.AiHumanClusterMapper">
+    
+    <resultMap type="AiHumanCluster" id="AiHumanClusterResult">
+        <result property="clusterId"    column="cluster_id"    />
+        <result property="clusterName"    column="cluster_name"    />
+        <result property="ipAddress"    column="ip_address"    />
+        <result property="port"    column="port"    />
+        <result property="gpuCount"    column="gpu_count"    />
+        <result property="gpuType"    column="gpu_type"    />
+        <result property="gpuMemory"    column="gpu_memory"    />
+        <result property="status"    column="status"    />
+        <result property="enabled"    column="enabled"    />
+        <result property="cpuCores"    column="cpu_cores"    />
+        <result property="memorySize"    column="memory_size"    />
+        <result property="diskSpace"    column="disk_space"    />
+        <result property="loadAverage"    column="load_average"    />
+        <result property="temperature"    column="temperature"    />
+        <result property="lastHeartbeat"    column="last_heartbeat"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="remark"    column="remark"    />
+    </resultMap>
+
+    <sql id="selectAiHumanClusterVo">
+        select cluster_id, cluster_name, ip_address, port, gpu_count, gpu_type, gpu_memory, status, enabled, cpu_cores, memory_size, disk_space, load_average, temperature, last_heartbeat, create_by, create_time, update_by, update_time, remark from ai_human_cluster
+    </sql>
+
+    <select id="selectAiHumanClusterList" parameterType="AiHumanCluster" resultMap="AiHumanClusterResult">
+        <include refid="selectAiHumanClusterVo"/>
+        <where>  
+            <if test="clusterName != null  and clusterName != ''"> and cluster_name like concat('%', #{clusterName}, '%')</if>
+            <if test="ipAddress != null  and ipAddress != ''"> and ip_address = #{ipAddress}</if>
+            <if test="port != null "> and port = #{port}</if>
+            <if test="gpuCount != null "> and gpu_count = #{gpuCount}</if>
+            <if test="gpuType != null  and gpuType != ''"> and gpu_type = #{gpuType}</if>
+            <if test="gpuMemory != null "> and gpu_memory = #{gpuMemory}</if>
+            <if test="status != null  and status != ''"> and status = #{status}</if>
+            <if test="enabled != null  and enabled != ''"> and enabled = #{enabled}</if>
+            <if test="cpuCores != null "> and cpu_cores = #{cpuCores}</if>
+            <if test="memorySize != null "> and memory_size = #{memorySize}</if>
+            <if test="diskSpace != null "> and disk_space = #{diskSpace}</if>
+            <if test="loadAverage != null "> and load_average = #{loadAverage}</if>
+            <if test="temperature != null "> and temperature = #{temperature}</if>
+            <if test="lastHeartbeat != null "> and last_heartbeat = #{lastHeartbeat}</if>
+        </where>
+    </select>
+    
+    <select id="selectAiHumanClusterByClusterId" parameterType="Long" resultMap="AiHumanClusterResult">
+        <include refid="selectAiHumanClusterVo"/>
+        where cluster_id = #{clusterId}
+    </select>
+
+    <insert id="insertAiHumanCluster" parameterType="AiHumanCluster" useGeneratedKeys="true" keyProperty="clusterId">
+        insert into ai_human_cluster
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="clusterName != null and clusterName != ''">cluster_name,</if>
+            <if test="ipAddress != null and ipAddress != ''">ip_address,</if>
+            <if test="port != null">port,</if>
+            <if test="gpuCount != null">gpu_count,</if>
+            <if test="gpuType != null">gpu_type,</if>
+            <if test="gpuMemory != null">gpu_memory,</if>
+            <if test="status != null">status,</if>
+            <if test="enabled != null">enabled,</if>
+            <if test="cpuCores != null">cpu_cores,</if>
+            <if test="memorySize != null">memory_size,</if>
+            <if test="diskSpace != null">disk_space,</if>
+            <if test="loadAverage != null">load_average,</if>
+            <if test="temperature != null">temperature,</if>
+            <if test="lastHeartbeat != null">last_heartbeat,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+            <if test="remark != null">remark,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="clusterName != null and clusterName != ''">#{clusterName},</if>
+            <if test="ipAddress != null and ipAddress != ''">#{ipAddress},</if>
+            <if test="port != null">#{port},</if>
+            <if test="gpuCount != null">#{gpuCount},</if>
+            <if test="gpuType != null">#{gpuType},</if>
+            <if test="gpuMemory != null">#{gpuMemory},</if>
+            <if test="status != null">#{status},</if>
+            <if test="enabled != null">#{enabled},</if>
+            <if test="cpuCores != null">#{cpuCores},</if>
+            <if test="memorySize != null">#{memorySize},</if>
+            <if test="diskSpace != null">#{diskSpace},</if>
+            <if test="loadAverage != null">#{loadAverage},</if>
+            <if test="temperature != null">#{temperature},</if>
+            <if test="lastHeartbeat != null">#{lastHeartbeat},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+            <if test="remark != null">#{remark},</if>
+         </trim>
+    </insert>
+
+    <update id="updateAiHumanCluster" parameterType="AiHumanCluster">
+        update ai_human_cluster
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="clusterName != null and clusterName != ''">cluster_name = #{clusterName},</if>
+            <if test="ipAddress != null and ipAddress != ''">ip_address = #{ipAddress},</if>
+            <if test="port != null">port = #{port},</if>
+            <if test="gpuCount != null">gpu_count = #{gpuCount},</if>
+            <if test="gpuType != null">gpu_type = #{gpuType},</if>
+            <if test="gpuMemory != null">gpu_memory = #{gpuMemory},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="cpuCores != null">cpu_cores = #{cpuCores},</if>
+            <if test="memorySize != null">memory_size = #{memorySize},</if>
+            <if test="diskSpace != null">disk_space = #{diskSpace},</if>
+            <if test="loadAverage != null">load_average = #{loadAverage},</if>
+            <if test="temperature != null">temperature = #{temperature},</if>
+            <if test="lastHeartbeat != null">last_heartbeat = #{lastHeartbeat},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+            <if test="createTime != null">create_time = #{createTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </trim>
+        where cluster_id = #{clusterId}
+    </update>
+
+    <delete id="deleteAiHumanClusterByClusterId" parameterType="Long">
+        delete from ai_human_cluster where cluster_id = #{clusterId}
+    </delete>
+
+    <delete id="deleteAiHumanClusterByClusterIds" parameterType="String">
+        delete from ai_human_cluster where cluster_id in 
+        <foreach item="clusterId" collection="array" open="(" separator="," close=")">
+            #{clusterId}
+        </foreach>
+    </delete>
+</mapper>
