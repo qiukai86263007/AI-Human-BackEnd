@@ -55,8 +55,8 @@ public class TaskProcessor {
                 return;
             }
 
-            log.info("开始处理任务: taskId={}, taskName={}, taskType={}, 当前运行任务数={}",
-                    task.getTaskId(), task.getTaskName(), task.getTaskType(), runningTasks + 1);
+            log.info("开始处理任务: taskId={}, taskName={}, 当前运行任务数={}",
+                    task.getTaskId(), task.getTaskName(), runningTasks + 1);
 
             // 更新任务状态为处理中
             task.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING));

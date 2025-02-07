@@ -9,6 +9,22 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="素材ID" prop="materialId">
+        <el-input
+          v-model="queryParams.materialId"
+          placeholder="请输入素材ID"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="父任务ID" prop="parentTaskId">
+        <el-input
+          v-model="queryParams.parentTaskId"
+          placeholder="请输入父任务ID"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item label="优先级" prop="priority">
         <el-input
           v-model="queryParams.priority"
@@ -20,7 +36,7 @@
       <el-form-item label="提交时间" prop="submitTime">
         <el-date-picker clearable
           v-model="queryParams.submitTime"
-          type="date"
+          type="datetime"
           value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择提交时间">
         </el-date-picker>
@@ -28,7 +44,7 @@
       <el-form-item label="开始处理时间" prop="processStartTime">
         <el-date-picker clearable
           v-model="queryParams.processStartTime"
-          type="date"
+          type="datetime"
           value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择开始处理时间">
         </el-date-picker>
@@ -36,7 +52,7 @@
       <el-form-item label="处理完成时间" prop="processEndTime">
         <el-date-picker clearable
           v-model="queryParams.processEndTime"
-          type="date"
+          type="datetime"
           value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择处理完成时间">
         </el-date-picker>
@@ -113,7 +129,8 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="任务ID" align="center" prop="taskId" />
       <el-table-column label="任务名称" align="center" prop="taskName" />
-      <el-table-column label="任务类型" align="center" prop="taskType" />
+      <el-table-column label="素材ID" align="center" prop="materialId" />
+      <el-table-column label="父任务ID" align="center" prop="parentTaskId" />
       <el-table-column label="任务状态" align="center" prop="status" />
       <el-table-column label="优先级" align="center" prop="priority" />
       <el-table-column label="提交时间" align="center" prop="submitTime" width="180">
@@ -155,7 +172,7 @@
         </template>
       </el-table-column>
     </el-table>
-
+    
     <pagination
       v-show="total>0"
       :total="total"
@@ -170,13 +187,19 @@
         <el-form-item label="任务名称" prop="taskName">
           <el-input v-model="form.taskName" placeholder="请输入任务名称" />
         </el-form-item>
+        <el-form-item label="素材ID" prop="materialId">
+          <el-input v-model="form.materialId" placeholder="请输入素材ID" />
+        </el-form-item>
+        <el-form-item label="父任务ID" prop="parentTaskId">
+          <el-input v-model="form.parentTaskId" placeholder="请输入父任务ID" />
+        </el-form-item>
         <el-form-item label="优先级" prop="priority">
           <el-input v-model="form.priority" placeholder="请输入优先级" />
         </el-form-item>
         <el-form-item label="提交时间" prop="submitTime">
           <el-date-picker clearable
             v-model="form.submitTime"
-            type="date"
+            type="datetime"
             value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择提交时间">
           </el-date-picker>
@@ -184,7 +207,7 @@
         <el-form-item label="开始处理时间" prop="processStartTime">
           <el-date-picker clearable
             v-model="form.processStartTime"
-            type="date"
+            type="datetime"
             value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择开始处理时间">
           </el-date-picker>
@@ -192,7 +215,7 @@
         <el-form-item label="处理完成时间" prop="processEndTime">
           <el-date-picker clearable
             v-model="form.processEndTime"
-            type="date"
+            type="datetime"
             value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择处理完成时间">
           </el-date-picker>
@@ -251,7 +274,8 @@ export default {
         pageNum: 1,
         pageSize: 10,
         taskName: null,
-        taskType: null,
+        materialId: null,
+        parentTaskId: null,
         status: null,
         priority: null,
         submitTime: null,
@@ -269,8 +293,11 @@ export default {
         taskName: [
           { required: true, message: "任务名称不能为空", trigger: "blur" }
         ],
-        taskType: [
-          { required: true, message: "任务类型不能为空", trigger: "change" }
+        materialId: [
+          { required: true, message: "素材ID不能为空", trigger: "blur" }
+        ],
+        parentTaskId: [
+          { required: true, message: "父任务ID不能为空", trigger: "blur" }
         ],
       }
     };
@@ -298,7 +325,8 @@ export default {
       this.form = {
         taskId: null,
         taskName: null,
-        taskType: null,
+        materialId: null,
+        parentTaskId: null,
         status: null,
         priority: null,
         submitTime: null,

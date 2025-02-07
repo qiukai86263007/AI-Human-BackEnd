@@ -7,7 +7,7 @@ import com.ruoyi.aihuman.domain.AiHumanTask;
  * 任务管理Mapper接口
  * 
  * @author ruoyi
- * @date 2025-02-06
+ * @date 2025-02-07
  */
 public interface AiHumanTaskMapper 
 {

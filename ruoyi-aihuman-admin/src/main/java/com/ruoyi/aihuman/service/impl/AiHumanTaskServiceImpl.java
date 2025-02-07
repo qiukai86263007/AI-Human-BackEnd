@@ -12,7 +12,7 @@ import com.ruoyi.aihuman.service.IAiHumanTaskService;
  * 任务管理Service业务层处理
  * 
  * @author ruoyi
- * @date 2025-02-06
+ * @date 2025-02-07
  */
 @Service
 public class AiHumanTaskServiceImpl implements IAiHumanTaskService 

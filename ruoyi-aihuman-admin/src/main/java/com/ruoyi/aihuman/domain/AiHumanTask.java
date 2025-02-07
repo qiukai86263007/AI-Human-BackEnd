@@ -11,7 +11,7 @@ import com.ruoyi.common.core.domain.BaseEntity;
  * 任务管理对象 ai_human_task
  * 
  * @author ruoyi
- * @date 2025-02-06
+ * @date 2025-02-07
  */
 public class AiHumanTask extends BaseEntity
 {
@@ -24,9 +24,13 @@ public class AiHumanTask extends BaseEntity
     @Excel(name = "任务名称")
     private String taskName;
 
-    /** 任务类型 */
-    @Excel(name = "任务类型")
-    private String taskType;
+    /** 素材ID */
+    @Excel(name = "素材ID")
+    private String materialId;
+
+    /** 父任务ID */
+    @Excel(name = "父任务ID")
+    private String parentTaskId;
 
     /** 任务状态（0待处理 1处理中 2已完成 3失败） */
     @Excel(name = "任务状态", readConverterExp = "0=待处理,1=处理中,2=已完成,3=失败")
@@ -85,14 +89,23 @@ public class AiHumanTask extends BaseEntity
     {
         return taskName;
     }
-    public void setTaskType(String taskType) 
+    public void setMaterialId(String materialId) 
     {
-        this.taskType = taskType;
+        this.materialId = materialId;
     }
 
-    public String getTaskType() 
+    public String getMaterialId() 
     {
-        return taskType;
+        return materialId;
+    }
+    public void setParentTaskId(String parentTaskId) 
+    {
+        this.parentTaskId = parentTaskId;
+    }
+
+    public String getParentTaskId() 
+    {
+        return parentTaskId;
     }
     public void setStatus(String status) 
     {
@@ -181,7 +194,8 @@ public class AiHumanTask extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("taskId", getTaskId())
             .append("taskName", getTaskName())
-            .append("taskType", getTaskType())
+            .append("materialId", getMaterialId())
+            .append("parentTaskId", getParentTaskId())
             .append("status", getStatus())
             .append("priority", getPriority())
             .append("submitTime", getSubmitTime())

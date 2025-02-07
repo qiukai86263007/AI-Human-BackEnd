@@ -93,7 +93,7 @@
         <el-date-picker clearable
           v-model="queryParams.lastHeartbeat"
           type="date"
-          value-format="yyyy-MM-dd"
+          value-format="yyyy-MM-dd HH:mm:ss"
           placeholder="请选择最后心跳时间">
         </el-date-picker>
       </el-form-item>
@@ -167,7 +167,7 @@
       <el-table-column label="GPU温度(℃)" align="center" prop="temperature" />
       <el-table-column label="最后心跳时间" align="center" prop="lastHeartbeat" width="180">
         <template slot-scope="scope">
-          <span>{{ parseTime(scope.row.lastHeartbeat, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.lastHeartbeat, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="备注" align="center" prop="remark" />
@@ -239,7 +239,7 @@
           <el-date-picker clearable
             v-model="form.lastHeartbeat"
             type="date"
-            value-format="yyyy-MM-dd"
+            value-format="yyyy-MM-dd HH:mm:ss"
             placeholder="请选择最后心跳时间">
           </el-date-picker>
         </el-form-item>
