@@ -35,8 +35,8 @@ public class TaskProcessor {
     /**
      * 每2秒执行一次任务处理
      */
-    @Scheduled(fixedRate = 2000)
-    @Async
+//    @Scheduled(fixedRate = 2000)
+//    @Async
     public void processTask() {
         AiHumanTask task = null;
         try {

@@ -133,3 +133,5 @@ ai-human:
   task:
     # 最大并发任务数
     max-concurrent-tasks: 2
+    upload-path: /Users/qiukai/Documents/Project/IDeaProject/AI-Human-BackEnd
+
