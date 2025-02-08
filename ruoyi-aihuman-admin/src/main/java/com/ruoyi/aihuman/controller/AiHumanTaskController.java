@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,6 +39,9 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/aihuman/task")
 public class AiHumanTaskController extends BaseController
 {
+
+    private static final Logger log = LoggerFactory.getLogger(AiHumanTaskController.class);
+
     @Autowired
     private IAiHumanTaskService aiHumanTaskService;
 
@@ -103,11 +108,11 @@ public class AiHumanTaskController extends BaseController
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public AjaxResult submit(@ApiParam(value = "任务信息", required = true) @RequestParam("taskName") String taskName,
                            @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
+        AiHumanTask aiHumanTask = new AiHumanTask();
         try {
             String fileName = file.getOriginalFilename();
             saveTaskFile(fileName, file);
             // 初始化任务对象
-            AiHumanTask aiHumanTask = new AiHumanTask();
             aiHumanTask.setTaskName(taskName);                                     // 设置任务名称
             aiHumanTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING));       // 设置任务状态为待处理
             aiHumanTask.setPriority(5L);                                           // 设置默认优先级为1
@@ -118,8 +123,11 @@ public class AiHumanTaskController extends BaseController
             aiHumanTask.setParentTaskId(UUID.randomUUID().toString());             // 设置父任务ID
             aiHumanTask.setClientId(UUID.randomUUID().toString());                 // 设置客户端ID
             aiHumanTask.setUserId(UUID.randomUUID().toString());                   // 设置用户ID
+            log.info("提交任务: task={}", aiHumanTask);
             return toAjax(aiHumanTaskService.insertAiHumanTask(aiHumanTask));
         } catch (IOException e) {
+            log.error("提交任务失败: error={}", e.getMessage(), e);
+            log.error("task={}", aiHumanTask);
             return AjaxResult.error("提交失败：" + e.getMessage());
         }
     }

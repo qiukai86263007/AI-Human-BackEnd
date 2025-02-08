@@ -20,6 +20,14 @@ public interface IAiHumanUserService
     public AiHumanUser selectAiHumanUserByUserId(Long userId);
 
     /**
+     * 根据用户名查询用户
+     *
+     * @param userName 用户名
+     * @return 用户对象信息
+     */
+    public AiHumanUser selectAiHumanUserByUserName(String userName);
+
+    /**
      * 查询用户管理列表
      * 
      * @param aiHumanUser 用户管理

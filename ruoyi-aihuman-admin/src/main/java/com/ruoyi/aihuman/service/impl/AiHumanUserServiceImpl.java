@@ -93,4 +93,15 @@ public class AiHumanUserServiceImpl implements IAiHumanUserService
     {
         return aiHumanUserMapper.deleteAiHumanUserByUserId(userId);
     }
+    /**
+     * 根据用户名查询用户
+     * 
+     * @param userName 用户名
+     * @return 用户对象信息
+     */
+    @Override
+    public AiHumanUser selectAiHumanUserByUserName(String userName)
+    {
+        return aiHumanUserMapper.selectAiHumanUserByUserName(userName);
+    }
 }

@@ -58,4 +58,12 @@ public interface AiHumanUserMapper
      * @return 结果
      */
     public int deleteAiHumanUserByUserIds(Long[] userIds);
+    /**
+     * 根据用户名查询用户
+     * 
+     * @param userName 用户名
+     * @return 用户对象信息
+     */
+    public AiHumanUser selectAiHumanUserByUserName(String userName);
+
 }
