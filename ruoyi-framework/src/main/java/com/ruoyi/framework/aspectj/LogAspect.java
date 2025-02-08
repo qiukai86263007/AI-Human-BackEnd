@@ -144,7 +144,7 @@ public class LogAspect
      */
     private boolean isAnonymousUrl(String url)
     {
-        return "/aihuman/task/submit".equals(url) || "/aihuman/user/login".equals(url) || "/aihuman/cluster/heartbeat".equals(url);
+        return "/aihuman/task/submit".equals(url) || "/aihuman/user/login".equals(url) || "/aihuman/cluster/heartbeat".equals(url)|| "/aihuman/task/dispatch".equals(url);
     }
     /**
      * 获取注解中对方法的描述信息 用于Controller层注解

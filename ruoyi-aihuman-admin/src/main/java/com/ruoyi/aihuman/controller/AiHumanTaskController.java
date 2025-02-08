@@ -110,7 +110,9 @@ public class AiHumanTaskController extends BaseController
                            @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
         AiHumanTask aiHumanTask = new AiHumanTask();
         try {
-            String fileName = file.getOriginalFilename();
+            String originalFileName = file.getOriginalFilename();
+            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            String fileName = UUID.randomUUID() + fileExtension;
             saveTaskFile(fileName, file);
             // 初始化任务对象
             aiHumanTask.setTaskName(taskName);                                     // 设置任务名称
@@ -119,7 +121,7 @@ public class AiHumanTaskController extends BaseController
             aiHumanTask.setSubmitTime(new Date());                                 // 设置提交时间
             aiHumanTask.setCreateTime(new Date());                                 // 设置创建时间
             aiHumanTask.setCreateBy("admin");                                      // 设置创建者
-            aiHumanTask.setMaterialId(UUID.randomUUID().toString());               // 设置文件ID
+            aiHumanTask.setMaterialId(fileName);               // 设置文件ID
             aiHumanTask.setParentTaskId(UUID.randomUUID().toString());             // 设置父任务ID
             aiHumanTask.setClientId(UUID.randomUUID().toString());                 // 设置客户端ID
             aiHumanTask.setUserId(UUID.randomUUID().toString());                   // 设置用户ID
@@ -176,5 +178,74 @@ public class AiHumanTaskController extends BaseController
     public AjaxResult remove(@ApiParam(value = "任务ID数组", required = true) @PathVariable Long[] taskIds)
     {
         return toAjax(aiHumanTaskService.deleteAiHumanTaskByTaskIds(taskIds));
+    }
+
+    /**
+     * 任务分发接口
+     */
+    @ApiOperation(value = "任务分发", notes = "为子节点分配待处理的任务，返回任务信息和素材文件")
+    @GetMapping("/dispatch")
+    public void dispatch(HttpServletResponse response,@RequestParam("cluster_id") String clusterId) {
+        try {
+            log.info("节点[{}]，请求任务分发接口....", clusterId);
+            // 获取优先级最高且提交时间最早的待处理任务，使用行级锁确保并发安全
+            AiHumanTask targetTask = null;
+            synchronized (this) {
+                AiHumanTask queryTask = new AiHumanTask();
+                queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING));
+                List<AiHumanTask> tasks = aiHumanTaskService.selectAiHumanTaskList(queryTask);
+                
+                if (tasks == null || tasks.isEmpty()) {
+                    log.info("无任务可分发给{}....", clusterId);
+                    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                    return;
+                }
+                
+                // 按优先级降序和提交时间升序排序
+                targetTask = tasks.stream()
+                    .sorted((t1, t2) -> {
+                        int priorityCompare = t2.getPriority().compareTo(t1.getPriority());
+                        if (priorityCompare != 0) {
+                            return priorityCompare;
+                        }
+                        return t1.getSubmitTime().compareTo(t2.getSubmitTime());
+                    })
+                    .findFirst()
+                    .orElse(null);
+
+                if (targetTask == null) {
+                    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                    log.info("无任务可分发给{}....", clusterId);
+                    return;
+                }
+
+                // 获取素材文件
+                String materialPath = uploadPath + File.separator + "material" + File.separator + targetTask.getMaterialId();
+                File materialFile = new File(materialPath);
+                if (!materialFile.exists()) {
+                    log.error("素材文件不存在: {}", materialPath);
+                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+
+                // 文件存在，更新任务状态为处理中
+                targetTask.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING));
+                targetTask.setProcessStartTime(new Date());
+                aiHumanTaskService.updateAiHumanTask(targetTask);
+
+                // 设置响应头
+                response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+                response.setHeader("Content-Disposition", "attachment; filename=" + targetTask.getMaterialId());
+                response.setHeader("Task-Id", targetTask.getTaskId().toString());
+                response.setHeader("Task-Name", targetTask.getTaskName());
+                response.setHeader("Material-Name", targetTask.getMaterialId());
+                
+                // 将文件写入响应流
+                java.nio.file.Files.copy(materialFile.toPath(), response.getOutputStream());
+                response.getOutputStream().flush();
+            }
+        } catch (Exception e) {
+            log.error("任务分发失败: {}", e.getMessage(), e);
+        }
     }
 }
