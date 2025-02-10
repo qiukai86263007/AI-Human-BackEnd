@@ -105,7 +105,7 @@ public class AiHumanTaskController extends BaseController
     // todo: 将AiHumanTask所需字段放在Header中吧
     @ApiOperation(value = "提交任务", notes = "提交新的任务，包含任务信息和音频文件")
     @Log(title = "任务管理", businessType = BusinessType.INSERT)
-    @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/anonymous/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public AjaxResult submit(@ApiParam(value = "任务信息", required = true) @RequestParam("taskName") String taskName,
                            @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
         AiHumanTask aiHumanTask = new AiHumanTask();
@@ -116,7 +116,7 @@ public class AiHumanTaskController extends BaseController
             saveTaskFile(fileName, file);
             // 初始化任务对象
             aiHumanTask.setTaskName(taskName);                                     // 设置任务名称
-            aiHumanTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING));       // 设置任务状态为待处理
+            aiHumanTask.setStatus(TaskStatus.PENDING.getValue());       // 设置任务状态为待处理
             aiHumanTask.setPriority(5L);                                           // 设置默认优先级为1
             aiHumanTask.setSubmitTime(new Date());                                 // 设置提交时间
             aiHumanTask.setCreateTime(new Date());                                 // 设置创建时间
@@ -184,7 +184,7 @@ public class AiHumanTaskController extends BaseController
      * 任务分发接口
      */
     @ApiOperation(value = "任务分发", notes = "为子节点分配待处理的任务，返回任务信息和素材文件")
-    @GetMapping("/dispatch")
+    @GetMapping("/anonymous/dispatch")
     public void dispatch(HttpServletResponse response,@RequestParam("cluster_id") String clusterId) {
         try {
             log.info("节点[{}]，请求任务分发接口....", clusterId);
@@ -192,7 +192,7 @@ public class AiHumanTaskController extends BaseController
             AiHumanTask targetTask = null;
             synchronized (this) {
                 AiHumanTask queryTask = new AiHumanTask();
-                queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING));
+                queryTask.setStatus(TaskStatus.PENDING.getValue());
                 List<AiHumanTask> tasks = aiHumanTaskService.selectAiHumanTaskList(queryTask);
                 
                 if (tasks == null || tasks.isEmpty()) {
@@ -229,7 +229,7 @@ public class AiHumanTaskController extends BaseController
                 }
 
                 // 文件存在，更新任务状态为处理中
-                targetTask.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING));
+                targetTask.setStatus(TaskStatus.PROCESSING.getValue());
                 targetTask.setProcessStartTime(new Date());
                 aiHumanTaskService.updateAiHumanTask(targetTask);
 
@@ -246,6 +246,111 @@ public class AiHumanTaskController extends BaseController
             }
         } catch (Exception e) {
             log.error("任务分发失败: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 任务结果收集接口
+     */
+    @ApiOperation(value = "任务结果收集", notes = "接收子节点提交的任务处理结果")
+    @PostMapping("/anonymous/result")
+    public AjaxResult collectResult(
+            @ApiParam(value = "任务ID", required = true) @RequestParam("task_id") String taskId,
+            @ApiParam(value = "处理结果文件", required = true) @RequestPart("file") MultipartFile file,
+            @ApiParam(value = "处理状态(success/failed)", required = true) @RequestParam("status") String status,
+            @ApiParam(value = "失败原因", required = true) @RequestParam("err_msg") String errMsg,
+            @ApiParam(value = "集群节点ID", required = true) @RequestParam("cluster_id") String clusterId) {
+        log.info("接收任务[{}]处理结果，状态：{}，处理节点：{}", taskId, status, clusterId);
+        
+        try {
+            // 检查任务是否存在
+            AiHumanTask task = aiHumanTaskService.selectAiHumanTaskByTaskId(Long.valueOf(taskId));
+            if (task == null) {
+                log.error("任务[{}]不存在", taskId);
+                return AjaxResult.error("任务不存在");
+            }
+
+            // 检查任务状态是否为处理中
+            if (!TaskStatus.PROCESSING.getValue().equals(task.getStatus())) {
+                log.error("任务[{}]状态异常：{}", taskId, task.getStatus());
+                return AjaxResult.error("任务状态异常");
+            }
+
+            // 验证文件格式和大小
+            if (file.isEmpty()) {
+                String errorMsg = "结果文件为空";
+                updateTaskError(task, errorMsg);
+                return AjaxResult.error(errorMsg);
+            }
+
+            String originalFileName = file.getOriginalFilename();
+            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            String resultFileName = UUID.randomUUID() + fileExtension;
+            String resultDir = uploadPath + File.separator + "result";
+            File directory = new File(resultDir);
+            if (!directory.exists() && !directory.mkdirs()) {
+                String errorMsg = "创建结果文件目录失败";
+                updateTaskError(task, errorMsg);
+                return AjaxResult.error(errorMsg);
+            }
+
+            String resultPath = resultDir + File.separator + resultFileName;
+            File resultFile = new File(resultPath);
+
+            try {
+                file.transferTo(resultFile);
+            } catch (IOException e) {
+                String errorMsg = "保存结果文件失败：" + e.getMessage();
+                updateTaskError(task, errorMsg);
+                return AjaxResult.error(errorMsg);
+            }
+
+            // 更新任务状态和结果信息
+            task.setProcessEndTime(new Date());
+//            task.setResultPath(resultFileName);
+            if ("success".equals(status)) {
+                task.setStatus(TaskStatus.COMPLETED.getValue());
+                task.setErrorMessage(""); // 清空错误信息
+            } else {
+                task.setStatus(TaskStatus.FAILED.getValue());
+                task.setErrorMessage(errMsg);
+            }
+
+            aiHumanTaskService.updateAiHumanTask(task);
+            log.info("任务[{}]结果收集完成，状态：{}", taskId, status);
+            return AjaxResult.success();
+
+        } catch (Exception e) {
+            log.error("任务[{}]结果收集失败: {}", taskId, e.getMessage(), e);
+            try {
+                // 发生异常时，尝试回滚任务状态
+                AiHumanTask task = aiHumanTaskService.selectAiHumanTaskByTaskId(Long.valueOf(taskId));
+                if (task != null && TaskStatus.PROCESSING.getValue().equals(task.getStatus())) {
+                    task.setErrorMessage("处理失败：" + e.getMessage());
+                    task.setStatus(TaskStatus.FAILED.getValue());
+                    aiHumanTaskService.updateAiHumanTask(task);
+                }
+            } catch (Exception ex) {
+                log.error("回滚任务[{}]状态失败: {}", taskId, ex.getMessage(), ex);
+            }
+            return AjaxResult.error("结果收集失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新任务错误状态
+     *
+     * @param task 任务对象
+     * @param errorMsg 错误信息
+     */
+    private void updateTaskError(AiHumanTask task, String errorMsg) {
+        task.setStatus(TaskStatus.FAILED.getValue());
+        task.setErrorMessage(errorMsg);
+        task.setProcessEndTime(new Date());
+        try {
+            aiHumanTaskService.updateAiHumanTask(task);
+        } catch (Exception e) {
+            log.error("更新任务[{}]错误状态失败: {}", task.getTaskId(), e.getMessage(), e);
         }
     }
 }

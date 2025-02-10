@@ -4,20 +4,20 @@ package com.ruoyi.aihuman.enums;
  * 任务状态枚举
  */
 public enum TaskStatus {
-    PENDING(0, "待处理"),
-    PROCESSING(1, "处理中"),
-    COMPLETED(2, "已完成"),
-    FAILED(3, "失败");
+    PENDING("0", "待处理"),
+    PROCESSING("1", "处理中"),
+    COMPLETED("2", "已完成"),
+    FAILED("3", "失败");
 
-    private final int value;
+    private final String value;
     private final String description;
 
-    TaskStatus(int value, String description) {
+    TaskStatus(String value, String description) {
         this.value = value;
         this.description = description;
     }
 
-    public int getValue() {
+    public String getValue() {
         return value;
     }
 
@@ -25,16 +25,4 @@ public enum TaskStatus {
         return description;
     }
 
-    public static TaskStatus fromValue(int value) {
-        for (TaskStatus status : TaskStatus.values()) {
-            if (status.getValue() == value) {
-                return status;
-            }
-        }
-        throw new IllegalArgumentException("Unknown TaskStatus value: " + value);
-    }
-
-    public static String setStatus(TaskStatus status) {
-        return String.valueOf(status.getValue());
-    }
 }

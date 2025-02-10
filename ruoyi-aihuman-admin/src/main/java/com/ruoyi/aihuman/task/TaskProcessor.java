@@ -59,7 +59,7 @@ public class TaskProcessor {
                     task.getTaskId(), task.getTaskName(), runningTasks + 1);
 
             // 更新任务状态为处理中
-            task.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING));
+            task.setStatus(TaskStatus.PROCESSING.getValue());
             task.setProcessStartTime(new Date());
             taskService.updateAiHumanTask(task);
             log.info("任务状态更新为处理中: taskId={}", task.getTaskId());
@@ -68,7 +68,7 @@ public class TaskProcessor {
             doProcessTask(task);
 
             // 更新任务状态为已完成
-            task.setStatus(TaskStatus.setStatus(TaskStatus.COMPLETED));
+            task.setStatus(TaskStatus.COMPLETED.getValue());
             task.setProcessEndTime(new Date());
             taskService.updateAiHumanTask(task);
             log.info("任务处理完成: taskId={}, 耗时={}ms", task.getTaskId(),
@@ -77,7 +77,7 @@ public class TaskProcessor {
         } catch (Exception e) {
             log.error("任务处理失败: error={}", e.getMessage(), e);
             if (task != null) {
-                task.setStatus(TaskStatus.setStatus(TaskStatus.FAILED));
+                task.setStatus(TaskStatus.FAILED.getValue());
                 task.setErrorMessage(e.getMessage());
                 task.setProcessEndTime(new Date());
                 taskService.updateAiHumanTask(task);
@@ -92,7 +92,7 @@ public class TaskProcessor {
      */
     private AiHumanTask getNextTask() {
         AiHumanTask queryTask = new AiHumanTask();
-        queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PENDING)); // 待处理状态
+        queryTask.setStatus(TaskStatus.PENDING.getValue()); // 待处理状态
         queryTask.getParams().put("orderBy", "order by priority desc, submit_time asc");
         List<AiHumanTask> tasks = taskService.selectAiHumanTaskList(queryTask);
 
@@ -124,7 +124,7 @@ public class TaskProcessor {
      */
     private int getRunningTaskCount() {
         AiHumanTask queryTask = new AiHumanTask();
-        queryTask.setStatus(TaskStatus.setStatus(TaskStatus.PROCESSING)); // 处理中状态
+        queryTask.setStatus(TaskStatus.PROCESSING.getValue()); // 处理中状态
         List<AiHumanTask> runningTasks = taskService.selectAiHumanTaskList(queryTask);
         return runningTasks != null ? runningTasks.size() : 0;
     }
