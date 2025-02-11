@@ -835,9 +835,9 @@ create index idx_user_id on ai_human_task(user_id);
 
 
 -- ----------------------------
---22、 GPU集群管理表
+-- 22、 GPU集群管理表
 -- ----------------------------
-drop table if exists ai_human_cluster;
+drop table if exists ai_gpu_cluster;
 create table ai_gpu_cluster (
     cluster_id          bigint(20)      not null auto_increment    comment '集群ID',
     cluster_name        varchar(50)     not null                   comment '集群名称',
