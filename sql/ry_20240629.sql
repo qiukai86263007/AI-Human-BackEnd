@@ -805,26 +805,28 @@ values ('user1', 'nickname1', '00', 'user1@example.com', '12345678901', '0', '',
 -- 21、数字人渲染任务表字段
 -- ----------------------------
 drop table if exists ai_human_task;
-create table ai_human_task (
-                               task_id           bigint(20)      not null auto_increment    comment '任务ID',
-                               task_name         varchar(50)     not null                   comment '任务名称',
-                               task_type         varchar(20)     not null                   comment '任务类型',
-                               status            char(1)         default '0'                comment '任务状态（0待处理 1处理中 2已完成 3失败）',
-                               priority          int(4)          default 1                  comment '优先级（1-10，值越大优先级越高）',
-                               submit_time       datetime                                    comment '提交时间',
-                               process_start_time datetime                                   comment '开始处理时间',
-                               process_end_time  datetime                                    comment '处理完成时间',
-                               result            varchar(2000)                              comment '处理结果',
-                               error_message     varchar(2000)                              comment '失败原因',
-                               user_id         varchar(255)                                comment '用户标识',
-                               client_id         varchar(255)                                comment '客户端标识',
-                               create_by         varchar(64)     default ''                 comment '创建者',
-                               create_time       datetime                                    comment '创建时间',
-                               update_by         varchar(64)     default ''                 comment '更新者',
-                               update_time       datetime                                    comment '更新时间',
-                               remark            varchar(500)    default null               comment '备注',
-                               primary key (task_id)
-) engine=innodb auto_increment=100 comment = '任务表';
+create table ai_human_task
+(
+    task_id            bigint auto_increment comment '任务ID'
+        primary key,
+    task_name          varchar(50)             not null comment '任务名称',
+    material_id        varchar(60)             not null comment '素材ID',
+    parent_task_id     varchar(60)             not null comment '父任务ID',
+    status             char        default '0' null comment '任务状态（0待处理 1处理中 2已完成 3失败）',
+    priority           int         default 1   null comment '优先级（1-10，值越大优先级越高）',
+    submit_time        datetime                null comment '提交时间',
+    process_start_time datetime                null comment '开始处理时间',
+    process_end_time   datetime                null comment '处理完成时间',
+    result             varchar(2000)           null comment '处理结果',
+    error_message      varchar(2000)           null comment '失败原因',
+    user_id            varchar(255)            null comment '用户标识',
+    client_id          varchar(255)            null comment '客户端标识',
+    create_by          varchar(64) default ''  null comment '创建者',
+    create_time        datetime                null comment '创建时间',
+    update_by          varchar(64) default ''  null comment '更新者',
+    update_time        datetime                null comment '更新时间',
+    remark             varchar(500)            null comment '备注'
+)engine=innodb auto_increment=100 comment = '任务表';
 
 -- 创建索引
 create index idx_task_status on ai_human_task(status);
@@ -837,8 +839,8 @@ create index idx_user_id on ai_human_task(user_id);
 -- ----------------------------
 -- 22、 GPU集群管理表
 -- ----------------------------
-drop table if exists ai_gpu_cluster;
-create table ai_gpu_cluster (
+drop table if exists ai_human_cluster;
+create table ai_human_cluster (
     cluster_id          bigint(20)      not null auto_increment    comment '集群ID',
     cluster_name        varchar(50)     not null                   comment '集群名称',
     ip_address          varchar(50)     not null                   comment 'IP地址',
@@ -863,12 +865,12 @@ create table ai_gpu_cluster (
 ) engine=innodb auto_increment=100 comment = 'GPU集群管理表';
 
 -- 创建索引
-create index idx_cluster_status on ai_gpu_cluster(status);
-create index idx_cluster_enabled on ai_gpu_cluster(enabled);
-create index idx_last_heartbeat on ai_gpu_cluster(last_heartbeat);
+create index idx_cluster_status on ai_human_cluster(status);
+create index idx_cluster_enabled on ai_human_cluster(enabled);
+create index idx_last_heartbeat on ai_human_cluster(last_heartbeat);
 
 -- 插入测试数据
-INSERT INTO ai_gpu_cluster (cluster_name, ip_address, gpu_count, gpu_type, gpu_memory, status, enabled, cpu_cores, memory_size, disk_space, load_average, temperature, last_heartbeat, create_by, create_time, remark) VALUES 
+INSERT INTO ai_human_cluster (cluster_name, ip_address, gpu_count, gpu_type, gpu_memory, status, enabled, cpu_cores, memory_size, disk_space, load_average, temperature, last_heartbeat, create_by, create_time, remark) VALUES
 ('GPU-Cluster-01', '192.168.1.100', 4, 'NVIDIA GTX4090', 80, '0', '1', 64, 512, 2000, 35.50, 65.20, NOW(), 'admin', NOW(), '推理集群'),
 ('GPU-Cluster-02', '192.168.1.101', 2, 'NVIDIA GTX4090', 32, '1', '1', 32, 256, 1000, 85.20, 72.30, NOW(), 'admin', NOW(), '推理集群'),
 ('GPU-Cluster-03', '192.168.1.102', 8, 'NVIDIA GTX4090', 80, '2', '0', 128, 1024, 4000, 0.00, 45.00, NOW(), 'admin', NOW(), '推理集群');
