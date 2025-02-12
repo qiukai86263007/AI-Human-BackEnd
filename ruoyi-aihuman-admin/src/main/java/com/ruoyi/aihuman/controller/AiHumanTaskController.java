@@ -106,25 +106,26 @@ public class AiHumanTaskController extends BaseController
     @ApiOperation(value = "提交任务", notes = "提交新的任务，包含任务信息和音频文件")
     @Log(title = "任务管理", businessType = BusinessType.INSERT)
     @PostMapping(value = "/anonymous/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public AjaxResult submit(@ApiParam(value = "任务信息", required = true) @RequestParam("taskName") String taskName,
+    public AjaxResult submit(@ApiParam(value = "任务素材ID", required = true) @RequestParam("materialId") String materialId,
+                             @ApiParam(value = "父任务ID", required = true) @RequestParam("parentTaskId") String parentTaskId,
+                             @ApiParam(value = "用户ID", required = true) @RequestParam("userId") String userId,
+                             @ApiParam(value = "客户端ID", required = true) @RequestParam("clientId") String clientId,
                            @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
         AiHumanTask aiHumanTask = new AiHumanTask();
         try {
-            String originalFileName = file.getOriginalFilename();
-            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-            String fileName = UUID.randomUUID() + fileExtension;
+            String fileName = file.getOriginalFilename();
             saveTaskFile(fileName, file);
             // 初始化任务对象
-            aiHumanTask.setTaskName(taskName);                                     // 设置任务名称
+            aiHumanTask.setTaskName(fileName);                                     // 设置任务名称
             aiHumanTask.setStatus(TaskStatus.PENDING.getValue());       // 设置任务状态为待处理
-            aiHumanTask.setPriority(5L);                                           // 设置默认优先级为1
+            aiHumanTask.setPriority(5L);                                           // 设置默认优先级为5
             aiHumanTask.setSubmitTime(new Date());                                 // 设置提交时间
             aiHumanTask.setCreateTime(new Date());                                 // 设置创建时间
             aiHumanTask.setCreateBy("admin");                                      // 设置创建者
-            aiHumanTask.setMaterialId(fileName);               // 设置文件ID
-            aiHumanTask.setParentTaskId(UUID.randomUUID().toString());             // 设置父任务ID
-            aiHumanTask.setClientId(UUID.randomUUID().toString());                 // 设置客户端ID
-            aiHumanTask.setUserId(UUID.randomUUID().toString());                   // 设置用户ID
+            aiHumanTask.setMaterialId(materialId);               // 设置文件ID
+            aiHumanTask.setParentTaskId(parentTaskId);             // 设置父任务ID
+            aiHumanTask.setClientId(clientId);                 // 设置客户端ID
+            aiHumanTask.setUserId(userId);                   // 设置用户ID
             log.info("提交任务: task={}", aiHumanTask);
             return toAjax(aiHumanTaskService.insertAiHumanTask(aiHumanTask));
         } catch (IOException e) {
@@ -143,8 +144,8 @@ public class AiHumanTaskController extends BaseController
      * @throws IOException 如果文件保存失败
      */
     private String saveTaskFile(String fileName, MultipartFile file) throws IOException {
-        // 创建material文件夹（如果不存在）
-        String materialDir = uploadPath + File.separator + "material";
+        // 创建task文件夹（如果不存在）
+        String materialDir = uploadPath + File.separator + "task";
         File directory = new File(materialDir);
         if (!directory.exists()) {
             directory.mkdirs();
@@ -219,11 +220,11 @@ public class AiHumanTaskController extends BaseController
                     return;
                 }
 
-                // 获取素材文件
-                String materialPath = uploadPath + File.separator + "material" + File.separator + targetTask.getMaterialId();
-                File materialFile = new File(materialPath);
-                if (!materialFile.exists()) {
-                    log.error("素材文件不存在: {}", materialPath);
+                // 获取任务文件
+                String taskPath = uploadPath + File.separator + "task" + File.separator + targetTask.getTaskName();
+                File taskFile = new File(taskPath);
+                if (!taskFile.exists()) {
+                    log.error("任务文件不存在: {}", taskPath);
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     return;
                 }
@@ -235,13 +236,13 @@ public class AiHumanTaskController extends BaseController
 
                 // 设置响应头
                 response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-                response.setHeader("Content-Disposition", "attachment; filename=" + targetTask.getMaterialId());
+                response.setHeader("Content-Disposition", "attachment; filename=" + targetTask.getTaskName());
                 response.setHeader("Task-Id", targetTask.getTaskId().toString());
                 response.setHeader("Task-Name", targetTask.getTaskName());
-                response.setHeader("Material-Name", targetTask.getMaterialId());
+                response.setHeader("Material-ID", targetTask.getMaterialId());
                 
                 // 将文件写入响应流
-                java.nio.file.Files.copy(materialFile.toPath(), response.getOutputStream());
+                java.nio.file.Files.copy(taskFile.toPath(), response.getOutputStream());
                 response.getOutputStream().flush();
             }
         } catch (Exception e) {
