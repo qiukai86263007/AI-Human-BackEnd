@@ -283,9 +283,6 @@ public class AiHumanTaskController extends BaseController
                 return AjaxResult.error(errorMsg);
             }
 
-            String originalFileName = file.getOriginalFilename();
-            String fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
-            String resultFileName = UUID.randomUUID() + fileExtension;
             String resultDir = uploadPath + File.separator + "result";
             File directory = new File(resultDir);
             if (!directory.exists() && !directory.mkdirs()) {
@@ -294,7 +291,7 @@ public class AiHumanTaskController extends BaseController
                 return AjaxResult.error(errorMsg);
             }
 
-            String resultPath = resultDir + File.separator + resultFileName;
+            String resultPath = resultDir + File.separator + file.getOriginalFilename();;
             File resultFile = new File(resultPath);
 
             try {
