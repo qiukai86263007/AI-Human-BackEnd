@@ -335,6 +335,70 @@ public class AiHumanTaskController extends BaseController
         }
     }
 
+
+    /**
+     * 渲染结果下载接口，提供给客户端匿名调用
+     */
+    @ApiOperation(value = "下载任务结果", notes = "根据任务名称下载对应的处理结果文件")
+    @GetMapping("/anonymous/download")
+    public void downloadResult(
+            HttpServletResponse response,
+            @ApiParam(value = "任务名称，为音频素材的{uuid},如818c6df0-3f16-4bcc-b67e-ead92f31e134", required = true) @RequestParam("taskUUID") String taskUUID) {
+        try {
+            String taskName = taskUUID + ".wav";
+            log.info("请求下载任务[{}]的结果文件", taskName);
+            // 查询任务是否存在
+            AiHumanTask queryTask = new AiHumanTask();
+            queryTask.setTaskName(taskName);
+            List<AiHumanTask> tasks = aiHumanTaskService.selectAiHumanTaskList(queryTask);
+            if (tasks == null || tasks.isEmpty()) {
+                log.error("任务[{}]不存在", taskName);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            // 检查任务状态
+            AiHumanTask task = tasks.get(0);
+            if (!TaskStatus.COMPLETED.getValue().equals(task.getStatus())) {
+                log.error("任务[{}]未完成，当前状态: {}", taskName, task.getStatus());
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                return;
+            }
+            String resultFileName = taskUUID + ".mp4";
+            // 构建结果文件路径
+            String resultPath = uploadPath + File.separator + "result" + File.separator + resultFileName;
+            File resultFile = new File(resultPath);
+            
+            // 检查文件是否存在
+            if (!resultFile.exists()) {
+                log.error("任务[{}]的结果文件不存在: {}", taskUUID, resultPath);
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            
+            // 设置响应头
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+            response.setHeader("Content-Disposition", "attachment; filename=" + resultFileName);
+            
+            // 将文件写入响应流
+            java.nio.file.Files.copy(resultFile.toPath(), response.getOutputStream());
+            response.getOutputStream().flush();
+            log.info("任务[{}]的结果文件下载完成", taskName);
+            // 删除原始文件
+            if (resultFile.delete()) {
+                log.info("任务[{}]的结果文件已删除: {}", taskName, resultPath);
+            } else {
+                log.warn("任务[{}]的结果文件删除失败: {}", taskName, resultPath);
+            }
+
+        } catch (Exception e) {
+            log.error("下载任务[{}]的结果文件失败: {}", taskUUID, e.getMessage(), e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            // 异常发生时要不要立即删除原有文件？
+        }
+    }
+
+
     /**
      * 更新任务错误状态
      *
