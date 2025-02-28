@@ -128,7 +128,7 @@ public class AiHumanTaskController extends BaseController
             aiHumanTask.setUserId(userId);                   // 设置用户ID
             log.info("提交任务: task={}", aiHumanTask);
             return toAjax(aiHumanTaskService.insertAiHumanTask(aiHumanTask));
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("提交任务失败: error={}", e.getMessage(), e);
             log.error("task={}", aiHumanTask);
             return AjaxResult.error("提交失败：" + e.getMessage());
