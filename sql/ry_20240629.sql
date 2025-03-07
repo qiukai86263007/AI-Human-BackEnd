@@ -825,7 +825,8 @@ create table ai_human_task
     create_time        datetime                null comment '创建时间',
     update_by          varchar(64) default ''  null comment '更新者',
     update_time        datetime                null comment '更新时间',
-    remark             varchar(500)            null comment '备注'
+    remark             varchar(500)            null comment '备注',
+    image_id           varchar(60)             null comment '形象ID'
 )engine=innodb auto_increment=100 comment = '任务表';
 
 -- 创建索引

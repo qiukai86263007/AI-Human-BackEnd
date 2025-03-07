@@ -2,9 +2,7 @@ package com.ruoyi.aihuman.controller;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
@@ -27,6 +25,16 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import com.ruoyi.aihuman.enums.TaskStatus;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.nio.file.*;
 
 /**
  * 任务管理Controller
@@ -106,55 +114,178 @@ public class AiHumanTaskController extends BaseController
     @ApiOperation(value = "提交任务", notes = "提交新的任务，包含任务信息和音频文件")
     @Log(title = "任务管理", businessType = BusinessType.INSERT)
     @PostMapping(value = "/anonymous/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public AjaxResult submit(@ApiParam(value = "任务素材ID", required = true) @RequestParam("materialId") String materialId,
+    public AjaxResult submit(@ApiParam(value = "音频ID", required = true) @RequestParam("audioIdList") List<String> audioIdList,
+                             @ApiParam(value = "形象ID", required = true) @RequestParam("imageIdList") List<String> imageIdList,
                              @ApiParam(value = "父任务ID", required = true) @RequestParam("parentTaskId") String parentTaskId,
                              @ApiParam(value = "用户ID", required = true) @RequestParam("userId") String userId,
                              @ApiParam(value = "客户端ID", required = true) @RequestParam("clientId") String clientId,
-                           @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
-        AiHumanTask aiHumanTask = new AiHumanTask();
+                             @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
+        // 检查参数合法性
+        if (audioIdList.size() != imageIdList.size()) {
+            return AjaxResult.error("参数错误");
+        }
+        String fileName = file.getOriginalFilename();
+        if (!fileName.endsWith(".zip")) {
+            return AjaxResult.error("文件格式错误");
+        }
+
+        String targetPath = uploadPath + File.separator + "source_zip";
+        File directory = new File(targetPath);
+
         try {
-            String fileName = file.getOriginalFilename();
-            saveTaskFile(fileName, file);
-            // 初始化任务对象
-            aiHumanTask.setTaskName(fileName);                                     // 设置任务名称
-            aiHumanTask.setStatus(TaskStatus.PENDING.getValue());       // 设置任务状态为待处理
-            aiHumanTask.setPriority(5L);                                           // 设置默认优先级为5
-            aiHumanTask.setSubmitTime(new Date());                                 // 设置提交时间
-            aiHumanTask.setCreateTime(new Date());                                 // 设置创建时间
-            aiHumanTask.setCreateBy("admin");                                      // 设置创建者
-            aiHumanTask.setMaterialId(materialId);               // 设置文件ID
-            aiHumanTask.setParentTaskId(parentTaskId);             // 设置父任务ID
-            aiHumanTask.setClientId(clientId);                 // 设置客户端ID
-            aiHumanTask.setUserId(userId);                   // 设置用户ID
-            log.info("提交任务: task={}", aiHumanTask);
-            return toAjax(aiHumanTaskService.insertAiHumanTask(aiHumanTask));
-        } catch (Exception e) {
+            // 创建临时目录
+            createDirectoryIfNotExists(directory);
+            // 保存上传的文件
+            Path filePath = saveUploadedFile(file, targetPath, fileName);
+            // 解压文件
+            unzipFile(file, targetPath);
+
+            String baseDir = targetPath + File.separator + fileName.replace(".zip", "");
+            // 检查文件是否存在
+            List<String> missingFiles = checkFilesExist(audioIdList, baseDir);
+            if (!missingFiles.isEmpty()) {
+                log.error("缺失的音频文件: {}", missingFiles);
+                deleteFilesAndFolders(directory);
+                return AjaxResult.error("缺失部分文件");
+            }
+
+            // 检验完成，准备复制文件和入库
+            List<AiHumanTask> taskList = new ArrayList<>();
+            for (int i = 0; i < audioIdList.size(); i++) {
+                moveFileOrDirectory(baseDir + File.separator + audioIdList.get(i) + ".wav",
+                        uploadPath + File.separator + "task");
+                // 初始化任务对象
+                AiHumanTask aiHumanTask = createTask(audioIdList, imageIdList, parentTaskId, userId, clientId, i);
+                taskList.add(aiHumanTask);
+                log.info("提交任务: task={}", aiHumanTask);
+                aiHumanTaskService.insertAiHumanTask(aiHumanTask);
+            }
+            deleteFilesAndFolders(directory);
+            return AjaxResult.success("全部提交成功");
+        } catch (IOException e) {
             log.error("提交任务失败: error={}", e.getMessage(), e);
-            log.error("task={}", aiHumanTask);
+            deleteFilesAndFolders(directory);
             return AjaxResult.error("提交失败：" + e.getMessage());
         }
     }
 
-    /**
-     * 保存任务相关的文件
-     *
-     * @param fileName 文件名
-     * @param file 上传的文件
-     * @return 保存后的文件路径
-     * @throws IOException 如果文件保存失败
-     */
-    private String saveTaskFile(String fileName, MultipartFile file) throws IOException {
-        // 创建task文件夹（如果不存在）
-        String materialDir = uploadPath + File.separator + "task";
-        File directory = new File(materialDir);
+    // 创建目录，如果目录不存在
+    private void createDirectoryIfNotExists(File directory) throws IOException {
         if (!directory.exists()) {
-            directory.mkdirs();
+            if (!directory.mkdirs()) {
+                throw new IOException("无法创建目录: " + directory.getAbsolutePath());
+            }
         }
-        String filePath = materialDir + File.separator + fileName;
-        // 保存文件
-        File dest = new File(filePath);
-        file.transferTo(dest);
+    }
+
+    // 保存上传的文件
+    private Path saveUploadedFile(MultipartFile file, String targetPath, String fileName) throws IOException {
+        Path filePath = Paths.get(targetPath, fileName);
+        Files.copy(file.getInputStream(), filePath);
         return filePath;
+    }
+
+    // 解压文件
+    private void unzipFile(MultipartFile file, String targetPath) throws IOException {
+        try (ZipInputStream zis = new ZipInputStream(file.getInputStream())) {
+            ZipEntry zipEntry = zis.getNextEntry();
+            while (zipEntry != null) {
+                String entryName = zipEntry.getName();
+                Path entryPath = Paths.get(targetPath, entryName);
+                if (zipEntry.isDirectory()) {
+                    Files.createDirectories(entryPath);
+                } else {
+                    Files.createDirectories(entryPath.getParent());
+                    Files.copy(zis, entryPath);
+                }
+                zipEntry = zis.getNextEntry();
+            }
+        }
+    }
+
+    // 检查文件是否存在
+    private List<String> checkFilesExist(List<String> audioIdList, String baseDir) {
+        List<String> missingFiles = new ArrayList<>();
+        for (String singFile : audioIdList) {
+            String filePathToCheck = baseDir + File.separator + singFile + ".wav";
+            File fileToCheck = new File(filePathToCheck);
+            if (!fileToCheck.exists()) {
+                missingFiles.add(filePathToCheck);
+            }
+        }
+        return missingFiles;
+    }
+
+    // 创建任务对象
+    private AiHumanTask createTask(List<String> audioIdList, List<String> imageIdList, String parentTaskId, String userId, String clientId, int index) {
+        AiHumanTask aiHumanTask = new AiHumanTask();
+        aiHumanTask.setTaskName(audioIdList.get(index) + ".wav");
+        aiHumanTask.setStatus(TaskStatus.PENDING.getValue());
+        aiHumanTask.setPriority(5L);
+        aiHumanTask.setSubmitTime(new Date());
+        aiHumanTask.setCreateTime(new Date());
+        aiHumanTask.setCreateBy("admin");
+        aiHumanTask.setMaterialId(audioIdList.get(index));
+        aiHumanTask.setParentTaskId(parentTaskId);
+        aiHumanTask.setImageId(imageIdList.get(index));
+        aiHumanTask.setClientId(clientId);
+        aiHumanTask.setUserId(userId);
+        return aiHumanTask;
+    }
+
+    private static Path moveFileOrDirectory(String sourcePath, String targetDir) throws IOException {
+        // 将路径转换为 Path 对象
+        Path source = Paths.get(sourcePath);
+        Path target = Paths.get(targetDir);
+
+        // 检查源路径是否存在
+        if (!Files.exists(source)) {
+            throw new IOException("源路径 '" + sourcePath + "' 不存在");
+        }
+
+        // 创建目标目录（如果不存在）
+        if (!Files.exists(target)) {
+            Files.createDirectories(target);
+            log.info("目标目录 '{}' 已创建", targetDir);
+        }
+
+        // 构建目标路径
+        Path targetPath = target.resolve(source.getFileName());
+
+        // 处理目标路径冲突
+        if (Files.exists(targetPath)) {
+            log.warn("警告：目标路径 '{}' 已存在，将被覆盖", targetPath);
+        }
+
+        // 移动文件或目录
+        Files.move(source, targetPath, StandardCopyOption.REPLACE_EXISTING);
+
+        // 打印移动结果
+        if (Files.isDirectory(source)) {
+            log.info("目录 '{}' 已移动到 '{}'", source, targetPath);
+        } else {
+            log.info("文件 '{}' 已移动到 '{}'", source, targetPath);
+        }
+        return targetPath;
+    }
+
+    // 递归删除文件夹及其内容
+    private static void deleteFilesAndFolders(File directory) {
+        // 获取目录下的所有文件和文件夹
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // 如果是文件，直接删除
+                if (file.isFile()) {
+                    file.delete();
+                } else if (file.isDirectory()) {
+                    // 如果是文件夹，递归删除文件夹中的内容
+                    deleteFilesAndFolders(file);
+                    // 删除空文件夹
+                    file.delete();
+                }
+            }
+        }
     }
 
     /**

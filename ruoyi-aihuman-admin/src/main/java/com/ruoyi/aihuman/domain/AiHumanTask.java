@@ -32,6 +32,10 @@ public class AiHumanTask extends BaseEntity
     @Excel(name = "父任务ID")
     private String parentTaskId;
 
+    /** 形象ID */
+    @Excel(name = "形象ID")
+    private String imageId;
+
     /** 任务状态（0待处理 1处理中 2已完成 3失败） */
     @Excel(name = "任务状态", readConverterExp = "0=待处理,1=处理中,2=已完成,3=失败")
     private String status;
@@ -107,6 +111,17 @@ public class AiHumanTask extends BaseEntity
     {
         return parentTaskId;
     }
+
+    public void setImageId(String imageId)
+    {
+        this.imageId = imageId;
+    }
+
+    public String getImageId()
+    {
+        return imageId;
+    }
+
     public void setStatus(String status) 
     {
         this.status = status;
@@ -191,25 +206,26 @@ public class AiHumanTask extends BaseEntity
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("taskId", getTaskId())
-            .append("taskName", getTaskName())
-            .append("materialId", getMaterialId())
-            .append("parentTaskId", getParentTaskId())
-            .append("status", getStatus())
-            .append("priority", getPriority())
-            .append("submitTime", getSubmitTime())
-            .append("processStartTime", getProcessStartTime())
-            .append("processEndTime", getProcessEndTime())
-            .append("result", getResult())
-            .append("errorMessage", getErrorMessage())
-            .append("userId", getUserId())
-            .append("clientId", getClientId())
-            .append("createBy", getCreateBy())
-            .append("createTime", getCreateTime())
-            .append("updateBy", getUpdateBy())
-            .append("updateTime", getUpdateTime())
-            .append("remark", getRemark())
-            .toString();
+        return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+                .append("taskId", getTaskId())
+                .append("taskName", getTaskName())
+                .append("materialId", getMaterialId())
+                .append("parentTaskId", getParentTaskId())
+                .append("imageId", getImageId())
+                .append("status", getStatus())
+                .append("priority", getPriority())
+                .append("submitTime", getSubmitTime())
+                .append("processStartTime", getProcessStartTime())
+                .append("processEndTime", getProcessEndTime())
+                .append("result", getResult())
+                .append("errorMessage", getErrorMessage())
+                .append("userId", getUserId())
+                .append("clientId", getClientId())
+                .append("createBy", getCreateBy())
+                .append("createTime", getCreateTime())
+                .append("updateBy", getUpdateBy())
+                .append("updateTime", getUpdateTime())
+                .append("remark", getRemark())
+                .toString();
     }
 }
