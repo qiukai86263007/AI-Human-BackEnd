@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.ruoyi.aihuman.mapper.AiHumanTaskMapper;
 import com.ruoyi.aihuman.domain.AiHumanTask;
 import com.ruoyi.aihuman.service.IAiHumanTaskService;
+import java.util.Map;
 
 /**
  * 任务管理Service业务层处理
@@ -92,5 +93,10 @@ public class AiHumanTaskServiceImpl implements IAiHumanTaskService
     public int deleteAiHumanTaskByTaskId(Long taskId)
     {
         return aiHumanTaskMapper.deleteAiHumanTaskByTaskId(taskId);
+    }
+
+    @Override
+    public Map<String, Integer> countTasksByParentTaskIdAndStatus(String parentTaskId) {
+        return aiHumanTaskMapper.countTasksByParentTaskIdAndStatus(parentTaskId);
     }
 }

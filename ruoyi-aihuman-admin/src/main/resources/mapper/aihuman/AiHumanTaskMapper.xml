@@ -130,4 +130,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{taskId}
         </foreach>
     </delete>
+
+    <select id="countTasksByParentTaskIdAndStatus" resultType="java.util.Map">
+        SELECT
+        SUM(CASE WHEN status = '0' THEN 1 ELSE 0 END) AS pending_count,
+        SUM(CASE WHEN status = '1' THEN 1 ELSE 0 END) AS processing_count,
+        SUM(CASE WHEN status = '2' THEN 1 ELSE 0 END) AS completed_count,
+        SUM(CASE WHEN status = '3' THEN 1 ELSE 0 END) AS failed_count,
+        COUNT(*) AS total_count
+        FROM ai_human_task
+        WHERE parent_task_id = #{parentTaskId}
+    </select>
+
 </mapper>

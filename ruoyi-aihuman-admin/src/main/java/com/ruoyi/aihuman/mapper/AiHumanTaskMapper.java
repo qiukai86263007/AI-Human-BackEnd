@@ -1,6 +1,7 @@
 package com.ruoyi.aihuman.mapper;
 
 import java.util.List;
+import java.util.Map;
 import com.ruoyi.aihuman.domain.AiHumanTask;
 
 /**
@@ -58,4 +59,12 @@ public interface AiHumanTaskMapper
      * @return 结果
      */
     public int deleteAiHumanTaskByTaskIds(Long[] taskIds);
+
+    /**
+     * 按parentTaskId统计不同状态的任务数量
+     *
+     * @param parentTaskId 父任务ID
+     * @return 包含不同状态任务数量的Map
+     */
+    Map<String, Integer> countTasksByParentTaskIdAndStatus(String parentTaskId);
 }

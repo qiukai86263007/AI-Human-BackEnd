@@ -1,6 +1,7 @@
 package com.ruoyi.aihuman.service;
 
 import java.util.List;
+import java.util.Map;
 import com.ruoyi.aihuman.domain.AiHumanTask;
 
 /**
@@ -9,7 +10,7 @@ import com.ruoyi.aihuman.domain.AiHumanTask;
  * @author ruoyi
  * @date 2025-02-07
  */
-public interface IAiHumanTaskService 
+public interface IAiHumanTaskService
 {
     /**
      * 查询任务管理
@@ -58,4 +59,12 @@ public interface IAiHumanTaskService
      * @return 结果
      */
     public int deleteAiHumanTaskByTaskId(Long taskId);
+
+    /**
+     * 按parentTaskId统计不同状态的任务数量
+     *
+     * @param parentTaskId 父任务ID
+     * @return 包含不同状态任务数量的Map
+     */
+    Map<String, Integer> countTasksByParentTaskIdAndStatus(String parentTaskId);
 }

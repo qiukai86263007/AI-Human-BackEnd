@@ -95,6 +95,19 @@ public class AiHumanTaskController extends BaseController
     }
 
     /**
+     * 按parentTaskId统计不同状态的任务数量
+     *
+     * @param parentTaskId 父任务ID
+     * @return 包含不同状态任务数量的Map
+     */
+    @ApiOperation(value = "按父任务ID统计不同状态的任务数量", notes = "根据父任务ID统计待处理、处理中、已完成、失败任务的数量")
+    @GetMapping("/anonymous/status/{parentTaskId}")
+    public AjaxResult countTasksByParentTaskIdAndStatus(@ApiParam(value = "父任务ID", required = true) @PathVariable("parentTaskId") String parentTaskId) {
+        Map<String, Integer> result = aiHumanTaskService.countTasksByParentTaskIdAndStatus(parentTaskId);
+        return AjaxResult.success(result);
+    }
+
+    /**
      * 新增任务管理
      */
     @ApiOperation(value = "新增任务", notes = "新增任务管理信息")
