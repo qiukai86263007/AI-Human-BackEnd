@@ -142,4 +142,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         WHERE parent_task_id = #{parentTaskId}
     </select>
 
+    <select id="getMP4FilesByParentTaskId" resultType="java.lang.String">
+        SELECT task_name
+        FROM ai_human_task
+        WHERE parent_task_id = #{parentTaskId}
+    </select>
+
 </mapper>

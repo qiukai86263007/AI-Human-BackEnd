@@ -36,6 +36,14 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.nio.file.*;
 
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import java.io.FileInputStream;
+import java.util.zip.ZipOutputStream;
+
+
 /**
  * 任务管理Controller
  *
@@ -132,7 +140,7 @@ public class AiHumanTaskController extends BaseController
                              @ApiParam(value = "父任务ID", required = true) @RequestParam("parentTaskId") String parentTaskId,
                              @ApiParam(value = "用户ID", required = true) @RequestParam("userId") String userId,
                              @ApiParam(value = "客户端ID", required = true) @RequestParam("clientId") String clientId,
-                             @ApiParam(value = "音频文件(.wav格式)", required = true) @RequestPart("file") MultipartFile file) {
+                             @ApiParam(value = "音频文件压缩包(.zip格式)", required = true) @RequestParam("file") MultipartFile file) {
         // 检查参数合法性
         if (audioIdList.size() != imageIdList.size()) {
             return AjaxResult.error("参数错误");
@@ -153,9 +161,9 @@ public class AiHumanTaskController extends BaseController
             // 解压文件
             unzipFile(file, targetPath);
 
-            String baseDir = targetPath + File.separator + fileName.replace(".zip", "");
+//            String baseDir = targetPath + File.separator + fileName.replace(".zip", "");
             // 检查文件是否存在
-            List<String> missingFiles = checkFilesExist(audioIdList, baseDir);
+            List<String> missingFiles = checkFilesExist(audioIdList, targetPath);
             if (!missingFiles.isEmpty()) {
                 log.error("缺失的音频文件: {}", missingFiles);
                 deleteFilesAndFolders(directory);
@@ -165,7 +173,7 @@ public class AiHumanTaskController extends BaseController
             // 检验完成，准备复制文件和入库
             List<AiHumanTask> taskList = new ArrayList<>();
             for (int i = 0; i < audioIdList.size(); i++) {
-                moveFileOrDirectory(baseDir + File.separator + audioIdList.get(i) + ".wav",
+                moveFileOrDirectory(targetPath + File.separator + audioIdList.get(i) + ".wav",
                         uploadPath + File.separator + "task");
                 // 初始化任务对象
                 AiHumanTask aiHumanTask = createTask(audioIdList, imageIdList, parentTaskId, userId, clientId, i);
@@ -238,7 +246,7 @@ public class AiHumanTaskController extends BaseController
         aiHumanTask.setSubmitTime(new Date());
         aiHumanTask.setCreateTime(new Date());
         aiHumanTask.setCreateBy("admin");
-        aiHumanTask.setMaterialId(audioIdList.get(index));
+        aiHumanTask.setMaterialId(imageIdList.get(index));
         aiHumanTask.setParentTaskId(parentTaskId);
         aiHumanTask.setImageId(imageIdList.get(index));
         aiHumanTask.setClientId(clientId);
@@ -481,67 +489,63 @@ public class AiHumanTaskController extends BaseController
 
 
     /**
-     * 渲染结果下载接口，提供给客户端匿名调用
+     * 下载指定 parentTaskId 下所有子任务的 MP4 文件压缩包
+     * @param parentTaskId 父任务 ID
+     * @param response HttpServletResponse 对象
      */
-    @ApiOperation(value = "下载任务结果", notes = "根据任务名称下载对应的处理结果文件")
-    @GetMapping("/anonymous/download")
-    public void downloadResult(
-            HttpServletResponse response,
-            @ApiParam(value = "任务名称，为音频素材的{uuid},如818c6df0-3f16-4bcc-b67e-ead92f31e134", required = true) @RequestParam("taskUUID") String taskUUID) {
+    @GetMapping("/anonymous/download/{parentTaskId}")
+    public void downloadMP4Files(@PathVariable String parentTaskId, HttpServletResponse response) {
         try {
-            String taskName = taskUUID + ".wav";
-            log.info("请求下载任务[{}]的结果文件", taskName);
-            // 查询任务是否存在
-            AiHumanTask queryTask = new AiHumanTask();
-            queryTask.setTaskName(taskName);
-            List<AiHumanTask> tasks = aiHumanTaskService.selectAiHumanTaskList(queryTask);
-            if (tasks == null || tasks.isEmpty()) {
-                log.error("任务[{}]不存在", taskName);
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
+            // 查询该 parentTaskId 下所有子任务的 MP4 文件路径
+            List<String> mp4Files = aiHumanTaskService.getMP4FilesByParentTaskId(parentTaskId);
 
-            // 检查任务状态
-            AiHumanTask task = tasks.get(0);
-            if (!TaskStatus.COMPLETED.getValue().equals(task.getStatus())) {
-                log.error("任务[{}]未完成，当前状态: {}", taskName, task.getStatus());
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                return;
+            // 拼接完整的文件路径
+            List<String> fullPaths = new ArrayList<>();
+            for (String fileName : mp4Files) {
+                String extractedNumber = fileName.substring(0, fileName.indexOf("."));
+                String fullPath = uploadPath + File.separator + "result" + File.separator + extractedNumber + ".mp4";
+                fullPaths.add(fullPath);
             }
-            String resultFileName = taskUUID + ".mp4";
-            // 构建结果文件路径
-            String resultPath = uploadPath + File.separator + "result" + File.separator + resultFileName;
-            File resultFile = new File(resultPath);
-            
-            // 检查文件是否存在
-            if (!resultFile.exists()) {
-                log.error("任务[{}]的结果文件不存在: {}", taskUUID, resultPath);
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                return;
-            }
-            
             // 设置响应头
-            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            response.setHeader("Content-Disposition", "attachment; filename=" + resultFileName);
-            
-            // 将文件写入响应流
-            java.nio.file.Files.copy(resultFile.toPath(), response.getOutputStream());
-            response.getOutputStream().flush();
-            log.info("任务[{}]的结果文件下载完成", taskName);
-            // 删除原始文件
-            if (resultFile.delete()) {
-                log.info("任务[{}]的结果文件已删除: {}", taskName, resultPath);
-            } else {
-                log.warn("任务[{}]的结果文件删除失败: {}", taskName, resultPath);
+            response.setContentType("application/zip");
+            response.setHeader("Content-Disposition", "attachment; filename=" + parentTaskId + ".zip");
+
+            // 创建 ZIP 输出流
+            try (ZipOutputStream zipOut = new ZipOutputStream(response.getOutputStream())) {
+                for (String filePath : fullPaths) {
+                    File file = new File(filePath);
+                    if (file.exists()) {
+                        try (FileInputStream fis = new FileInputStream(file)) {
+                            ZipEntry zipEntry = new ZipEntry(new File(filePath).getName());
+                            zipOut.putNextEntry(zipEntry);
+
+                            byte[] bytes = new byte[1024];
+                            int length;
+                            while ((length = fis.read(bytes)) >= 0) {
+                                zipOut.write(bytes, 0, length);
+                            }
+                            zipOut.closeEntry();
+                        }
+                    }
+                }
             }
 
-        } catch (Exception e) {
-            log.error("下载任务[{}]的结果文件失败: {}", taskUUID, e.getMessage(), e);
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            // 异常发生时要不要立即删除原有文件？
+            // 删除每个 MP4 文件
+            for (String filePath : fullPaths) {
+                File file = new File(filePath);
+                if (file.exists()) {
+                    if (file.delete()) {
+                        log.info("文件 {} 已删除", filePath);
+                    } else {
+                        log.error("文件 {} 删除失败", filePath);
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            log.error("下载文件失败: {}", e.getMessage(), e);
         }
     }
-
 
     /**
      * 更新任务错误状态

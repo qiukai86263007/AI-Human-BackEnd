@@ -10,8 +10,7 @@ import com.ruoyi.aihuman.domain.AiHumanTask;
  * @author ruoyi
  * @date 2025-02-07
  */
-public interface AiHumanTaskMapper 
-{
+public interface AiHumanTaskMapper {
     /**
      * 查询任务管理
      * 
@@ -67,4 +66,11 @@ public interface AiHumanTaskMapper
      * @return 包含不同状态任务数量的Map
      */
     Map<String, Integer> countTasksByParentTaskIdAndStatus(String parentTaskId);
+
+    /**
+     * 查询指定 parentTaskId 下所有子任务的 MP4 文件路径
+     * @param parentTaskId 父任务 ID
+     * @return MP4 文件路径列表
+     */
+    List<String> getMP4FilesByParentTaskId(String parentTaskId);
 }

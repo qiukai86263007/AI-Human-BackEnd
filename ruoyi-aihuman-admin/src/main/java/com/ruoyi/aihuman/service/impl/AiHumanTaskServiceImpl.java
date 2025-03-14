@@ -1,5 +1,6 @@
 package com.ruoyi.aihuman.service.impl;
 
+import java.util.Collections;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,5 +99,13 @@ public class AiHumanTaskServiceImpl implements IAiHumanTaskService
     @Override
     public Map<String, Integer> countTasksByParentTaskIdAndStatus(String parentTaskId) {
         return aiHumanTaskMapper.countTasksByParentTaskIdAndStatus(parentTaskId);
+    }
+
+    @Override
+    public List<String> getMP4FilesByParentTaskId(String parentTaskId) {
+        // 根据 parentTaskId 查询所有子任务的 MP4 文件路径
+        // 这里需要根据实际的数据库表结构和业务逻辑实现查询逻辑
+        // 示例代码如下，假设使用 MyBatis 进行数据库操作
+        return aiHumanTaskMapper.getMP4FilesByParentTaskId(parentTaskId);
     }
 }
